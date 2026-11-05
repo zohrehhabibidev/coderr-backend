@@ -1,11 +1,18 @@
 from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.generics import ListAPIView, RetrieveUpdateAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import LoginSerializer, RegistrationSerializer
+from auth_app.models import Profile
+
+from .serializers import (
+    LoginSerializer,
+    ProfileSerializer,
+    RegistrationSerializer,
+)
 
 
 class RegistrationView(generics.CreateAPIView):
@@ -52,7 +59,18 @@ class LoginView(APIView):
 
 
 class ProfileDetailView(RetrieveUpdateAPIView):
+    """Retrieve by User ID; profile updates belong to a later card."""
+
     http_method_names = ['get', 'patch', 'options']
+    queryset = Profile.objects.select_related("user")
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "user_id"
+    lookup_url_kwarg = "pk"
+
+    def patch(self, request, *args, **kwargs):
+        """Keep the future PATCH route from enabling updates implicitly."""
+        raise MethodNotAllowed("PATCH")
 
 
 class BusinessProfileListView(ListAPIView):
