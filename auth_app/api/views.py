@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import RegistrationSerializer
+from .serializers import LoginSerializer, RegistrationSerializer
 
 
 class RegistrationView(generics.CreateAPIView):
@@ -29,7 +29,26 @@ class RegistrationView(generics.CreateAPIView):
 
 
 class LoginView(APIView):
-    pass
+    serializer_class = LoginSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        token = Token.objects.get_or_create(user=user)[0]
+        return Response(
+            self.get_response_data(user, token),
+            status=status.HTTP_200_OK,
+        )
+
+    def get_response_data(self, user, token):
+        return {
+            "token": token.key,
+            "username": user.username,
+            "email": user.email,
+            "user_id": user.id,
+        }
 
 
 class ProfileDetailView(RetrieveUpdateAPIView):
