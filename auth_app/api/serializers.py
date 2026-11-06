@@ -58,12 +58,20 @@ class LoginSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    """Read-only profile details with account data from the related user."""
+    """Profile details with partial updates to the related account."""
 
     username = serializers.CharField(source="user.username", read_only=True)
-    first_name = serializers.CharField(source="user.first_name", read_only=True)
-    last_name = serializers.CharField(source="user.last_name", read_only=True)
-    email = serializers.EmailField(source="user.email", read_only=True)
+    first_name = serializers.CharField(
+        source="user.first_name", required=False,
+        allow_blank=True, max_length=150
+    )
+    last_name = serializers.CharField(
+        source="user.last_name", required=False,
+        allow_blank=True, max_length=150
+    )
+    email = serializers.EmailField(
+        source="user.email", required=False, allow_blank=True, max_length=254
+    )
     created_at = serializers.DateTimeField(
         source="user.date_joined", read_only=True
     )
@@ -75,4 +83,14 @@ class ProfileSerializer(serializers.ModelSerializer):
             "location", "tel", "description", "working_hours", "type",
             "email", "created_at",
         ]
-        read_only_fields = fields
+        read_only_fields = ["user", "username", "type", "created_at"]
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        # Email remains writable pending the A2 teacher/contract clarification.
+        user_data = validated_data.pop("user", {})
+        for field, value in user_data.items():
+            setattr(instance.user, field, value)
+        if user_data:
+            instance.user.save(update_fields=list(user_data))
+        return super().update(instance, validated_data)

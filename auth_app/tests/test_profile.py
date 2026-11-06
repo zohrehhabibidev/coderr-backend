@@ -111,18 +111,6 @@ class ProfileDetailTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, self.expected_business_data())
 
-    def test_patch_does_not_modify_profile_or_user(self):
-        self.authenticate(self.business)
-        response = self.client.patch(
-            reverse("profile-detail", args=[self.business.pk]),
-            {"location": "Changed", "first_name": "Changed"}, format="json",
-        )
-        self.assertEqual(response.status_code, 405)
-        self.business_profile.refresh_from_db()
-        self.business.refresh_from_db()
-        self.assertEqual(self.business_profile.location, "Berlin")
-        self.assertEqual(self.business.first_name, "Max")
-
     def test_url_resolves_to_profile_detail_view(self):
         url = reverse("profile-detail", args=[self.business.pk])
         self.assertEqual(url, f"/api/profile/{self.business.pk}/")
