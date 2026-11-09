@@ -9,6 +9,7 @@ from auth_app.models import Profile
 
 from .permissions import IsProfileOwnerOrReadOnly
 from .serializers import (
+    BusinessProfileSerializer,
     LoginSerializer,
     ProfileSerializer,
     RegistrationSerializer,
@@ -70,7 +71,9 @@ class ProfileDetailView(RetrieveUpdateAPIView):
 
 
 class BusinessProfileListView(ListAPIView):
-    pass
+    queryset = Profile.objects.filter(type="business")
+    serializer_class = BusinessProfileSerializer
+    permission_classes = [IsAuthenticated]
 
 
 class CustomerProfileListView(ListAPIView):
