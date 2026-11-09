@@ -94,7 +94,7 @@ class RegistrationTests(RegistrationTestBase):
                 self.assert_rejected({**self.payload, "type": role}, "type")
 
     def test_missing_required_fields(self):
-        # Email requiredness is undocumented; characterize it separately.
+        # Required email is tested separately below.
         for field in ("username", "password", "repeated_password", "type"):
             with self.subTest(field=field):
                 payload = self.payload.copy()
@@ -142,12 +142,12 @@ class RegistrationTests(RegistrationTestBase):
 
 
 class RegistrationEmailContractObservations(RegistrationTestBase):
-    """Observe email acceptance without establishing an API requirement."""
+    """Verify that registration requires a nonblank email."""
 
-    def test_missing_email_is_currently_accepted(self):
+    def test_missing_email_is_rejected(self):
         payload = self.payload.copy()
         del payload["email"]
-        self.assert_registration(payload)
+        self.assert_rejected(payload, "email")
 
-    def test_blank_email_is_currently_accepted(self):
-        self.assert_registration({**self.payload, "email": ""})
+    def test_blank_email_is_rejected(self):
+        self.assert_rejected({**self.payload, "email": ""}, "email")

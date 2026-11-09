@@ -8,6 +8,9 @@ from auth_app.models import Profile
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        required=True, allow_blank=False, max_length=254
+    )
     repeated_password = serializers.CharField(write_only=True)
     type = serializers.ChoiceField(
         choices=["customer", "business"],
