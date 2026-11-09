@@ -58,6 +58,32 @@ class BusinessProfileListTests(APITestCase):
             with self.subTest(field=field):
                 self.assertEqual(response.data[0][field], value)
 
+    def assert_business_values(self, data, user, text_values):
+        expected = {
+            "user": user.pk, "username": user.username,
+            "file": None, "type": "business", **text_values,
+        }
+        self.assertEqual(set(data), set(self.fields))
+        self.assertEqual(data, expected)
+        for field, value in expected.items():
+            with self.subTest(user=user.pk, field=field):
+                self.assertIs(type(data[field]), type(value))
+
+    def test_returns_only_business_profiles(self):
+        second = User.objects.create_user(username="second_business")
+        Profile.objects.create(user=second, type="business")
+        self.authenticate(self.customer)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.json(), list)
+        self.assertEqual(len(response.json()), 2)
+        profiles = {profile["user"]: profile for profile in response.json()}
+        self.assertEqual(set(profiles), {self.business.pk, second.pk})
+        self.assertNotIn(self.customer.pk, profiles)
+        for user, values in ((self.business, self.text_values),
+                             (second, dict.fromkeys(self.text_values, ""))):
+            self.assert_business_values(profiles[user.pk], user, values)
+
     def test_unset_text_fields_return_empty_strings(self):
         self.business.first_name = self.business.last_name = ""
         self.business.save(update_fields=["first_name", "last_name"])
