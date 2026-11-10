@@ -10,11 +10,12 @@ from offers_app.api.filters import OfferListFilter
 from offers_app.api.pagination import OfferPagination
 from offers_app.api.permissions import IsBusinessOrReadOnly
 from offers_app.api.serializers import (
+    OfferDetailSerializer,
     OfferListSerializer,
     OfferRetrieveSerializer,
     OfferSerializer,
 )
-from offers_app.models import Offer
+from offers_app.models import Offer, OfferDetail
 
 
 class OfferListCreateView(ListCreateAPIView):
@@ -56,4 +57,7 @@ class OfferDetailView(RetrieveAPIView):
 
 
 class OfferPackageDetailView(RetrieveAPIView):
-    pass
+    queryset = OfferDetail.objects.all()
+    serializer_class = OfferDetailSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "options"]
