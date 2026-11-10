@@ -12,3 +12,10 @@ class IsBusinessOrReadOnly(BasePermission):
             request.user.is_authenticated
             and getattr(profile, "type", None) == "business"
         )
+
+
+class IsOfferOwnerOrReadOnly(BasePermission):
+    """Restrict offer changes to the authenticated owner."""
+
+    def has_object_permission(self, request, view, obj):
+        return request.method in SAFE_METHODS or obj.user_id == request.user.pk
