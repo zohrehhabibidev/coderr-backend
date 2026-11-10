@@ -99,6 +99,32 @@ class OfferListSerializer(serializers.ModelSerializer):
         ]
 
 
+class OfferRetrieveDetailLinkSerializer(OfferDetailLinkSerializer):
+    """Use request-based absolute package URLs for offer retrieval (A5)."""
+
+    url = serializers.HyperlinkedIdentityField(
+        view_name="offer-package-detail",
+    )
+
+
+class OfferRetrieveSerializer(serializers.ModelSerializer):
+    """Represent one offer with package links and annotated minimum values."""
+
+    details = OfferRetrieveDetailLinkSerializer(many=True, read_only=True)
+    min_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2,
+        coerce_to_string=False, read_only=True,
+    )
+    min_delivery_time = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Offer
+        fields = [
+            "id", "user", "title", "image", "description", "created_at",
+            "updated_at", "details", "min_price", "min_delivery_time",
+        ]
+
+
 class OfferListQuerySerializer(serializers.Serializer):
     """Validate known parameters; extra query keys remain ignored."""
 
