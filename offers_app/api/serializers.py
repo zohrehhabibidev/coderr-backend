@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
 
@@ -57,3 +58,55 @@ class OfferSerializer(serializers.ModelSerializer):
                 **detail_data,
             )
         return offer
+
+
+class OfferDetailLinkSerializer(serializers.ModelSerializer):
+    """Match the relative detail links in the list contract (A5)."""
+
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OfferDetail
+        fields = ["id", "url"]
+
+    def get_url(self, obj):
+        return f"/offerdetails/{obj.pk}/"
+
+
+class OfferUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ["first_name", "last_name", "username"]
+
+
+class OfferListSerializer(serializers.ModelSerializer):
+    """Serialize list annotations without changing the create contract."""
+
+    details = OfferDetailLinkSerializer(many=True, read_only=True)
+    min_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2,
+        coerce_to_string=False, read_only=True,
+    )
+    min_delivery_time = serializers.IntegerField(read_only=True)
+    user_details = OfferUserSerializer(source="user", read_only=True)
+
+    class Meta:
+        model = Offer
+        fields = [
+            "id", "user", "title", "image", "description", "created_at",
+            "updated_at", "details", "min_price", "min_delivery_time",
+            "user_details",
+        ]
+
+
+class OfferListQuerySerializer(serializers.Serializer):
+    """Validate known parameters; extra query keys remain ignored."""
+
+    creator_id = serializers.IntegerField(required=False)
+    min_price = serializers.FloatField(required=False)
+    max_delivery_time = serializers.IntegerField(required=False)
+    ordering = serializers.ChoiceField(
+        choices=["updated_at", "-updated_at", "min_price", "-min_price"],
+        default="-updated_at",
+    )
+    page_size = serializers.IntegerField(required=False, min_value=1)
