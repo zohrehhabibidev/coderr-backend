@@ -10,6 +10,7 @@ from auth_app.models import Profile
 from .permissions import IsProfileOwnerOrReadOnly
 from .serializers import (
     BusinessProfileSerializer,
+    CustomerProfileSerializer,
     LoginSerializer,
     ProfileSerializer,
     RegistrationSerializer,
@@ -77,4 +78,9 @@ class BusinessProfileListView(ListAPIView):
 
 
 class CustomerProfileListView(ListAPIView):
-    pass
+    """Return all customer profiles as an array to authenticated users."""
+
+    queryset = Profile.objects.filter(type="customer")
+    serializer_class = CustomerProfileSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
