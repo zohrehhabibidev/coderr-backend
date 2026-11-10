@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+
 from offers_app.models import OfferDetail
 
 
@@ -18,8 +19,16 @@ class Order(models.Model):
 
     offer_detail = models.ForeignKey(
         OfferDetail,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name="orders"
+    )
+
+    title = models.CharField(max_length=200)
+
+    offer_type = models.CharField(
+        max_length=10,
+        choices=OfferDetail.OfferType.choices
     )
 
     price = models.DecimalField(
