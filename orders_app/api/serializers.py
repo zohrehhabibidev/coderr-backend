@@ -49,3 +49,37 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             offer_type=detail.offer_type,
             status=Order.OrderStatus.IN_PROGRESS,
         )
+
+
+class OrderUpdateSerializer(serializers.ModelSerializer):
+    """Update only status and return the complete order snapshot."""
+
+    status = serializers.ChoiceField(choices=Order.OrderStatus.choices)
+
+    class Meta:
+        model = Order
+        fields = [
+            "id", "customer_user", "business_user", "title", "revisions",
+            "delivery_time_in_days", "price", "features", "offer_type",
+            "status", "created_at", "updated_at",
+        ]
+        read_only_fields = [field for field in fields if field != "status"]
+        extra_kwargs = {"price": {"coerce_to_string": False}}
+
+    def to_internal_value(self, data):
+        if isinstance(data, Mapping):
+            if "status" not in data:
+                raise serializers.ValidationError({
+                    "status": "This field is required."
+                })
+            invalid = set(data) - {"status"}
+            if invalid:
+                raise serializers.ValidationError({
+                    name: "This field cannot be updated." for name in invalid
+                })
+        return super().to_internal_value(data)
+
+    def update(self, instance, validated_data):
+        instance.status = validated_data.get("status", instance.status)
+        instance.save(update_fields=["status", "updated_at"])
+        return instance

@@ -6,8 +6,15 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from orders_app.api.permissions import IsCustomer
-from orders_app.api.serializers import OrderCreateSerializer
+from orders_app.api.permissions import (
+    IsBusiness,
+    IsCustomer,
+    IsOrderBusinessOwner,
+)
+from orders_app.api.serializers import (
+    OrderCreateSerializer,
+    OrderUpdateSerializer,
+)
 from orders_app.models import Order
 
 
@@ -30,7 +37,12 @@ class OrderListCreateView(ListCreateAPIView):
 
 
 class OrderDetailView(RetrieveUpdateDestroyAPIView):
-    http_method_names = ['patch', 'delete', 'options']
+    """Allow assigned businesses to update status; defer DELETE to Card 30."""
+
+    queryset = Order.objects.all()
+    serializer_class = OrderUpdateSerializer
+    permission_classes = [IsAuthenticated, IsBusiness, IsOrderBusinessOwner]
+    http_method_names = ["patch", "options"]
 
 
 class OrderCountView(APIView):
