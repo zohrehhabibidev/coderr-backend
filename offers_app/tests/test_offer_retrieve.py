@@ -10,9 +10,10 @@ from rest_framework.test import APITestCase
 
 from auth_app.models import Profile
 from offers_app.models import Offer, OfferDetail
+from offers_app.tests.helpers import OfferTestHelpers
 
 
-class OfferRetrieveTests(APITestCase):
+class OfferRetrieveTests(OfferTestHelpers, APITestCase):
     """Verify Card 23 through HTTP with persisted offers and real tokens."""
 
     def setUp(self):
@@ -21,29 +22,6 @@ class OfferRetrieveTests(APITestCase):
         self.offer = self.make_offer(self.owner)
         self.url = reverse("offer-detail", args=[self.offer.pk])
         self.authenticate(self.owner)
-
-    def make_user(self, name, role=None, staff=False):
-        user = User.objects.create_user(username=name, is_staff=staff)
-        if role:
-            Profile.objects.create(user=user, type=role)
-        return user
-
-    def authenticate(self, user):
-        token, _ = Token.objects.get_or_create(user=user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
-
-    def make_offer(self, owner, price=Decimal("100.25"), days=3):
-        offer = Offer.objects.create(
-            user=owner, title="Design package", description="Logo and print",
-        )
-        for index, kind in enumerate(("basic", "standard", "premium")):
-            OfferDetail.objects.create(
-                offer=offer, offer_type=kind, title=kind, revisions=2,
-                price=price + index * 10,
-                delivery_time_in_days=days + 2 - index,
-                features=["Logo", "Source files"],
-            )
-        return offer
 
     def get_offer(self, url=None, **kwargs):
         response = self.client.get(url or self.url, **kwargs)

@@ -3,7 +3,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveAPIView,
-    RetrieveUpdateAPIView,
+    RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
 
@@ -49,8 +49,8 @@ class OfferListCreateView(ListCreateAPIView):
         )
 
 
-class OfferDetailView(RetrieveUpdateAPIView):
-    """Allow authenticated retrieval and owner-only partial updates."""
+class OfferDetailView(RetrieveUpdateDestroyAPIView):
+    """Allow authenticated reads and owner-only updates and deletion."""
 
     queryset = Offer.objects.prefetch_related("details").annotate(
         min_price=Min("details__price"),
@@ -58,7 +58,7 @@ class OfferDetailView(RetrieveUpdateAPIView):
     )
     serializer_class = OfferRetrieveSerializer
     permission_classes = [IsAuthenticated, IsOfferOwnerOrReadOnly]
-    http_method_names = ["get", "patch", "options"]
+    http_method_names = ["get", "patch", "delete", "options"]
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
