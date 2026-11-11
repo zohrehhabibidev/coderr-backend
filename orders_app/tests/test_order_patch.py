@@ -262,13 +262,10 @@ class OrderPatchTests(OfferTestHelpers, APITestCase):
         self.url = reverse("order-detail", args=[missing])
         self.assert_denied(404)
 
-    def test_delete_remains_unavailable_including_for_business_staff(self):
-        for staff in (False, True):
-            with self.subTest(staff=staff):
-                self.owner.is_staff = staff
-                self.owner.save(update_fields=["is_staff"])
-                before = self.snapshot()
-                response = self.client.delete(self.url)
-                self.assertEqual(response.status_code, 405)
-                self.assertNotIn("DELETE", response["Allow"])
-                self.assertEqual(self.snapshot(), before)
+    def test_options_advertises_patch_and_delete_without_changes(self):
+        before = self.snapshot()
+        response = self.client.options(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(set(response["Allow"].split(", ")),
+                         {"PATCH", "DELETE", "OPTIONS"})
+        self.assertEqual(self.snapshot(), before)

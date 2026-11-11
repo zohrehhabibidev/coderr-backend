@@ -3,7 +3,7 @@ from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.views import APIView
 
 from orders_app.api.permissions import (
@@ -37,12 +37,17 @@ class OrderListCreateView(ListCreateAPIView):
 
 
 class OrderDetailView(RetrieveUpdateDestroyAPIView):
-    """Allow assigned businesses to update status; defer DELETE to Card 30."""
+    """Allow business owners to update status and staff to delete orders."""
 
     queryset = Order.objects.all()
     serializer_class = OrderUpdateSerializer
     permission_classes = [IsAuthenticated, IsBusiness, IsOrderBusinessOwner]
-    http_method_names = ["patch", "options"]
+    http_method_names = ["patch", "delete", "options"]
+
+    def get_permissions(self):
+        if self.request.method == "DELETE":
+            return [IsAuthenticated(), IsAdminUser()]
+        return super().get_permissions()
 
 
 class OrderCountView(APIView):
