@@ -16,8 +16,6 @@ from orders_app.tests import test_order_list as listing
 class OrderPatchTests(OfferTestHelpers, APITestCase):
     """Check status-only writes, snapshot integrity and rejected requests."""
 
-    make_order = listing.OrderListTests.make_order
-    snapshot = listing.OrderListTests.snapshot
     package_snapshot = listing.OrderListTests.package_snapshot
     package_fields = listing.OrderListTests.package_fields
     assert_response_types = listing.OrderListTests.assert_response_types

@@ -8,7 +8,6 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from rest_framework.test import APITestCase
 
-from offers_app.tests import test_offer_delete as deletion
 from offers_app.tests.helpers import OfferTestHelpers
 from orders_app.api.views import OrderListCreateView
 from orders_app.models import Order
@@ -17,8 +16,6 @@ from orders_app.models import Order
 class OrderCreateTests(OfferTestHelpers, APITestCase):
     """Check creation, rejected writes and durable package snapshots."""
 
-    snapshot = deletion.OfferDeleteTests.snapshot
-    make_order = deletion.OfferDeleteTests.make_order
     package_fields = (
         "title", "revisions", "delivery_time_in_days", "price", "features",
         "offer_type",

@@ -1,12 +1,8 @@
 from copy import deepcopy
-from decimal import Decimal
 
-from django.contrib.auth.models import User
 from django.urls import reverse
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from auth_app.models import Profile
 from offers_app.models import Offer, OfferDetail
 from offers_app.tests.helpers import OfferTestHelpers
 from orders_app.models import Order
@@ -35,21 +31,6 @@ class OfferDeleteTests(OfferTestHelpers, APITestCase):
             for detail in unrelated.details.all():
                 self.make_order(detail)
         self.make_order(None)
-
-    def make_order(self, detail, state="completed"):
-        return Order.objects.create(
-            customer_user=self.customer,
-            business_user=detail.offer.user if detail else self.owner,
-            offer_detail=detail, title="Original purchased title",
-            offer_type=detail.offer_type if detail else "basic",
-            price=Decimal("49.75"), revisions=7,
-            delivery_time_in_days=12, features=["Original", "Stored feature"],
-            status=state,
-        )
-
-    def snapshot(self):
-        return [list(model.objects.order_by("pk").values())
-                for model in (Offer, OfferDetail, User, Profile, Token, Order)]
 
     def expected_deletion(self, before):
         expected = deepcopy(before)

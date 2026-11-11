@@ -13,7 +13,6 @@ from reviews_app.models import Review
 class OrderDeleteTests(OfferTestHelpers, APITestCase):
     """Verify method-specific authorization and precise database changes."""
 
-    make_order = deletion.OfferDeleteTests.make_order
     assert_error = deletion.OfferDeleteTests.assert_error
 
     def setUp(self):
@@ -33,7 +32,7 @@ class OrderDeleteTests(OfferTestHelpers, APITestCase):
 
     def snapshot(self):
         return [list(Review.objects.order_by("pk").values())] + (
-            deletion.OfferDeleteTests.snapshot(self))
+            super().snapshot())
 
     def assert_deleted(self):
         before = self.snapshot()

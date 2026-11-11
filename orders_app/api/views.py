@@ -1,11 +1,14 @@
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from auth_app.models import Profile
 from orders_app.api.permissions import (
     IsBusiness,
     IsCustomer,
@@ -51,7 +54,20 @@ class OrderDetailView(RetrieveUpdateDestroyAPIView):
 
 
 class OrderCountView(APIView):
-    pass
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "options"]
+
+    def get(self, request, business_user_id):
+        get_object_or_404(
+            Profile,
+            user_id=business_user_id,
+            type=Profile.UserType.BUSINESS,
+        )
+        order_count = Order.objects.filter(
+            business_user_id=business_user_id,
+            status=Order.OrderStatus.IN_PROGRESS,
+        ).count()
+        return Response({"order_count": order_count})
 
 
 class CompletedOrderCountView(APIView):
