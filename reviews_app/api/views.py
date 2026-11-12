@@ -1,10 +1,14 @@
+from django.db.models import Avg, Count
 from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from auth_app.models import Profile
+from offers_app.models import Offer
 from reviews_app.api.permissions import IsCustomer, IsReviewOwner
 from reviews_app.api.serializers import (
     ReviewCreateSerializer,
@@ -51,4 +55,19 @@ class ReviewDetailView(RetrieveUpdateDestroyAPIView):
 
 
 class BaseInfoView(APIView):
-    pass
+    permission_classes = [AllowAny]
+    http_method_names = ["get", "options"]
+
+    def get(self, request):
+        statistics = Review.objects.aggregate(
+            review_count=Count("pk"),
+            average_rating=Avg("rating"),
+        )
+        statistics["average_rating"] = round(
+            statistics["average_rating"] or 0.0, 1
+        )
+        statistics["business_profile_count"] = Profile.objects.filter(
+            type=Profile.UserType.BUSINESS,
+        ).count()
+        statistics["offer_count"] = Offer.objects.count()
+        return Response(statistics)
