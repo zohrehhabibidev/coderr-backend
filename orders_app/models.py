@@ -21,6 +21,7 @@ class Order(models.Model):
         OfferDetail,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name="orders"
     )
 

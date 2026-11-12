@@ -42,7 +42,10 @@ class OrderSnapshotMigrationTests(TransactionTestCase):
         with connection.schema_editor() as editor:
             editor.delete_model(apps.get_model("orders_app", "Order"))
         recorder = MigrationRecorder(connection)
-        for name in ("0002_order_snapshot", "0001_initial"):
+        for name in (
+            "0003_alter_order_offer_detail", "0002_order_snapshot",
+            "0001_initial",
+        ):
             recorder.record_unapplied("orders_app", name)
 
     def assert_test_database(self):
