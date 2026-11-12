@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 from django.db import IntegrityError, transaction
 from rest_framework import serializers
 
@@ -60,3 +62,35 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
                 raise
             message = "You have already reviewed this business user."
             raise serializers.ValidationError(message) from error
+
+
+class ReviewUpdateSerializer(serializers.ModelSerializer):
+    """Update review content and return the complete review representation."""
+
+    class Meta:
+        model = Review
+        fields = [
+            "id", "business_user", "reviewer", "rating", "description",
+            "created_at", "updated_at",
+        ]
+        read_only_fields = [
+            "id", "business_user", "reviewer", "created_at", "updated_at",
+        ]
+        extra_kwargs = {"rating": {"min_value": 1, "max_value": 5}}
+
+    def to_internal_value(self, data):
+        if isinstance(data, Mapping):
+            invalid = set(data) - {"rating", "description"}
+            if invalid:
+                raise serializers.ValidationError({
+                    name: "This field cannot be updated." for name in invalid
+                })
+        return super().to_internal_value(data)
+
+    def update(self, instance, validated_data):
+        if not validated_data:
+            return instance
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save(update_fields=[*validated_data, "updated_at"])
+        return instance

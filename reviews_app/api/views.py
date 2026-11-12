@@ -5,10 +5,11 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from reviews_app.api.permissions import IsCustomer
+from reviews_app.api.permissions import IsCustomer, IsReviewOwner
 from reviews_app.api.serializers import (
     ReviewCreateSerializer,
     ReviewListQuerySerializer,
+    ReviewUpdateSerializer,
 )
 from reviews_app.models import Review
 
@@ -41,7 +42,12 @@ class ReviewListCreateView(ListCreateAPIView):
 
 
 class ReviewDetailView(RetrieveUpdateDestroyAPIView):
-    http_method_names = ['patch', 'delete', 'options']
+    """Allow authenticated reviewers to partially update their reviews."""
+
+    queryset = Review.objects.all()
+    serializer_class = ReviewUpdateSerializer
+    permission_classes = [IsAuthenticated, IsReviewOwner]
+    http_method_names = ["patch", "options"]
 
 
 class BaseInfoView(APIView):

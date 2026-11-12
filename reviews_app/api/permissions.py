@@ -10,3 +10,10 @@ class IsCustomer(BasePermission):
             request.user.is_authenticated
             and getattr(profile, "type", None) == "customer"
         )
+
+
+class IsReviewOwner(BasePermission):
+    """Restrict review updates to their authenticated reviewer."""
+
+    def has_object_permission(self, request, view, obj):
+        return obj.reviewer_id == request.user.pk
