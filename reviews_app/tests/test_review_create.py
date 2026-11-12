@@ -152,9 +152,11 @@ class ReviewCreateTests(ReviewTestHelpers, APITestCase):
                 self.assert_field_error("business_user", value,
                                         "incorrect_type")
 
-    def test_fractional_business_identifier_string_is_rejected(self):
-        self.assert_field_error("business_user", f"{self.owner.pk}.5",
-                                "incorrect_type")
+    def test_fractional_business_identifiers_are_rejected(self):
+        for value in (f"{self.owner.pk}.5", self.owner.pk + 0.5):
+            with self.subTest(value=value):
+                self.assert_field_error("business_user", value,
+                                        "incorrect_type")
 
     def test_empty_business_identifier(self):
         self.assert_field_error("business_user", "", "null")

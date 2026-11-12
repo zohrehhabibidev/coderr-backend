@@ -17,8 +17,19 @@ class ReviewListQuerySerializer(serializers.Serializer):
     )
 
 
+class IntegerPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    """Reject fractional numeric primary keys before querying the database."""
+
+    def to_internal_value(self, data):
+        if isinstance(data, float) and not data.is_integer():
+            self.fail("incorrect_type", data_type=type(data).__name__)
+        return super().to_internal_value(data)
+
+
 class ReviewCreateSerializer(serializers.ModelSerializer):
     """Create a review with the authenticated customer as reviewer."""
+
+    serializer_related_field = IntegerPrimaryKeyRelatedField
 
     class Meta:
         model = Review
