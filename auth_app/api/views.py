@@ -72,7 +72,7 @@ class ProfileDetailView(RetrieveUpdateAPIView):
 
 
 class BusinessProfileListView(ListAPIView):
-    queryset = Profile.objects.filter(type="business")
+    queryset = Profile.objects.filter(type="business").select_related("user")
     serializer_class = BusinessProfileSerializer
     permission_classes = [IsAuthenticated]
 
@@ -80,7 +80,7 @@ class BusinessProfileListView(ListAPIView):
 class CustomerProfileListView(ListAPIView):
     """Return all customer profiles as an array to authenticated users."""
 
-    queryset = Profile.objects.filter(type="customer")
+    queryset = Profile.objects.filter(type="customer").select_related("user")
     serializer_class = CustomerProfileSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None
