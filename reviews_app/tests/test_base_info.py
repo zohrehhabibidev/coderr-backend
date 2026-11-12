@@ -128,6 +128,41 @@ class BaseInfoTests(ReviewTestHelpers, APITestCase):
         self.assertEqual(review.rating, 5)
         self.assert_statistics(average=4.7)
 
+    def assert_api_review_saved(self, method, url, payload, status):
+        response = getattr(self.client, method)(url, payload, format="json")
+        self.assertEqual(response.status_code, status)
+        self.assertEqual(response["Content-Type"], "application/json")
+        self.assertIs(type(response.json()), dict)
+        review = Review.objects.get(pk=response.json()["id"])
+        self.assert_record(response.json(), review)
+        self.assertEqual(review.reviewer_id, self.other.pk)
+        self.assertEqual(review.business_user_id, self.business.pk)
+        self.assertEqual(review.rating, payload["rating"])
+        self.assertEqual(review.description, "Integration review")
+        return reverse("review-detail", args=[review.pk])
+
+    def assert_api_review_deleted(self, url):
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 204)
+        self.assertIsNone(response.data)
+        self.assertEqual(response.content, b"")
+        self.assertFalse(Review.objects.filter(
+            pk=resolve(url).kwargs["pk"]).exists())
+
+    def test_review_api_lifecycle_updates_base_info(self):
+        self.authenticate(self.other)
+        before = self.snapshot()
+        payload = dict(business_user=self.business.pk, rating=5,
+                       description="Integration review")
+        url = self.assert_api_review_saved(
+            "post", reverse("review-list"), payload, 201)
+        self.assert_statistics(reviews=4, average=3.8)
+        self.assert_api_review_saved("patch", url, {"rating": 2}, 200)
+        self.assert_statistics(reviews=4, average=3.0)
+        self.assert_api_review_deleted(url)
+        self.assert_statistics(reviews=3, average=3.3)
+        self.assertEqual(self.snapshot(), before)
+
     def test_offer_creation_and_deletion_update_only_offer_count(self):
         offer = self.make_offer(self.owner)
         self.assert_statistics(offers=3)
