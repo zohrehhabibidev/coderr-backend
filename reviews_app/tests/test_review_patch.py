@@ -210,18 +210,18 @@ class ReviewPatchTests(ReviewTestHelpers, APITestCase):
         self.url = reverse("review-detail", args=[missing])
         self.assert_denied(404, "not_found")
 
-    def test_options_advertises_patch_and_options(self):
+    def test_options_advertises_patch_delete_and_options(self):
         before = self.snapshot()
         response = self.client.options(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/json")
         self.assertIs(type(response.json()), dict)
         self.assertEqual(set(response["Allow"].split(", ")),
-                         {"PATCH", "OPTIONS"})
+                         {"PATCH", "DELETE", "OPTIONS"})
         self.assertEqual(self.snapshot(), before)
 
     def test_unsupported_methods_return_405_without_changes(self):
-        for method in ("get", "post", "put", "delete", "head"):
+        for method in ("get", "post", "put", "head"):
             with self.subTest(method=method):
                 self.assert_method_not_allowed(method)
 
@@ -230,7 +230,7 @@ class ReviewPatchTests(ReviewTestHelpers, APITestCase):
         response = getattr(self.client, method)(self.url)
         self.assertEqual(response.status_code, 405)
         self.assertEqual(set(response["Allow"].split(", ")),
-                         {"PATCH", "OPTIONS"})
+                         {"PATCH", "DELETE", "OPTIONS"})
         if method != "head":
             self.assertEqual(response["Content-Type"], "application/json")
             self.assertIs(type(response.json()), dict)

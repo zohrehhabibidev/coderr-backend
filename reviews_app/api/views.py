@@ -42,12 +42,12 @@ class ReviewListCreateView(ListCreateAPIView):
 
 
 class ReviewDetailView(RetrieveUpdateDestroyAPIView):
-    """Allow authenticated reviewers to partially update their reviews."""
+    """Allow authenticated reviewers to update or delete their reviews."""
 
     queryset = Review.objects.all()
     serializer_class = ReviewUpdateSerializer
     permission_classes = [IsAuthenticated, IsReviewOwner]
-    http_method_names = ["patch", "options"]
+    http_method_names = ["patch", "delete", "options"]
 
 
 class BaseInfoView(APIView):
