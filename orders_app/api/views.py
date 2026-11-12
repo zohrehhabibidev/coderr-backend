@@ -71,4 +71,17 @@ class OrderCountView(APIView):
 
 
 class CompletedOrderCountView(APIView):
-    pass
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "options"]
+
+    def get(self, request, business_user_id):
+        get_object_or_404(
+            Profile,
+            user_id=business_user_id,
+            type=Profile.UserType.BUSINESS,
+        )
+        completed_order_count = Order.objects.filter(
+            business_user_id=business_user_id,
+            status=Order.OrderStatus.COMPLETED,
+        ).count()
+        return Response({"completed_order_count": completed_order_count})
