@@ -1,18 +1,14 @@
 """Card 34 GET contract and current query-validation behavior tests."""
 
-from datetime import datetime, timedelta, timezone as datetime_timezone
-
 from django.urls import resolve, reverse
-from django.utils import timezone
-from django.utils.dateparse import parse_datetime
 from rest_framework.test import APITestCase
 
-from offers_app.tests.helpers import OfferTestHelpers
 from reviews_app.api.views import ReviewListCreateView
 from reviews_app.models import Review
+from reviews_app.tests.helpers import ReviewTestHelpers
 
 
-class ReviewListTests(OfferTestHelpers, APITestCase):
+class ReviewListTests(ReviewTestHelpers, APITestCase):
     """Check authenticated listing, exact records and read-only safety."""
 
     def setUp(self):
@@ -29,20 +25,6 @@ class ReviewListTests(OfferTestHelpers, APITestCase):
         self.make_offer(self.owner)
         self.authenticate(self.customer)
 
-    def make_review(self, business, reviewer, rating, days):
-        review = Review.objects.create(
-            business_user=business, reviewer=reviewer, rating=rating,
-            description=f"Review {rating}\nVielen Dank! \u2605")
-        created = datetime(2024, 1, 1, tzinfo=datetime_timezone.utc)
-        Review.objects.filter(pk=review.pk).update(
-            created_at=created, updated_at=created + timedelta(days=days))
-        review.refresh_from_db()
-        return review
-
-    def snapshot(self):
-        return super().snapshot() + [
-            list(Review.objects.order_by("pk").values())]
-
     def assert_list(self, reviews, query="", ordered=False):
         before = self.snapshot()
         response = self.client.get(self.url + query)
@@ -58,25 +40,6 @@ class ReviewListTests(OfferTestHelpers, APITestCase):
                              [review.pk for review in reviews])
         self.assertEqual(self.snapshot(), before)
 
-    def assert_record(self, data, review):
-        expected = dict(id=review.pk, business_user=review.business_user_id,
-                        reviewer=review.reviewer_id, rating=review.rating,
-                        description=review.description)
-        for name in ("created_at", "updated_at"):
-            self.assert_timestamp(data[name], getattr(review, name))
-            expected[name] = data[name]
-        self.assertEqual(data, expected)
-        for name in ("id", "business_user", "reviewer", "rating"):
-            self.assertIs(type(data[name]), int)
-        self.assertIs(type(data["description"]), str)
-
-    def assert_timestamp(self, value, persisted):
-        self.assertIs(type(value), str)
-        parsed = parse_datetime(value)
-        self.assertIsNotNone(parsed)
-        self.assertTrue(timezone.is_aware(parsed))
-        self.assertEqual(parsed, persisted)
-
     def assert_error(self, query, status, codes):
         before = self.snapshot()
         response = self.client.get(self.url + query)
@@ -89,14 +52,6 @@ class ReviewListTests(OfferTestHelpers, APITestCase):
         if status == 401:
             self.assertEqual(response["WWW-Authenticate"], "Token")
         self.assertEqual(self.snapshot(), before)
-
-    def assert_error_content(self, errors, code):
-        if isinstance(errors, list):
-            self.assertTrue(errors)
-        for error in errors if isinstance(errors, list) else [errors]:
-            self.assertIsInstance(error, str)
-            self.assertTrue(error)
-            self.assertEqual(error.code, code)
 
     def test_url_resolution_and_get_availability(self):
         self.assertEqual(self.url, "/api/reviews/")

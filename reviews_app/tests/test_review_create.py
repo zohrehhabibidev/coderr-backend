@@ -5,16 +5,15 @@ from unittest.mock import patch
 from django.db import IntegrityError, transaction
 from django.urls import resolve, reverse
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
 from rest_framework.test import APITestCase
 
-from offers_app.tests.helpers import OfferTestHelpers
 from reviews_app.api.serializers import ReviewCreateSerializer
 from reviews_app.api.views import ReviewListCreateView
 from reviews_app.models import Review
+from reviews_app.tests.helpers import ReviewTestHelpers
 
 
-class ReviewCreateTests(OfferTestHelpers, APITestCase):
+class ReviewCreateTests(ReviewTestHelpers, APITestCase):
     """Verify review responses, role permissions and rejected-write safety."""
 
     def setUp(self):
@@ -28,10 +27,6 @@ class ReviewCreateTests(OfferTestHelpers, APITestCase):
         Review.objects.create(business_user=self.owner, reviewer=self.other,
                               rating=3, description="Existing review")
         self.authenticate(self.customer)
-
-    def snapshot(self):
-        return super().snapshot() + [
-            list(Review.objects.order_by("pk").values())]
 
     def assert_created(self, payload=None):
         payload = self.payload if payload is None else payload
@@ -71,15 +66,6 @@ class ReviewCreateTests(OfferTestHelpers, APITestCase):
         self.assertIs(type(data["description"]), str)
         self.assertLessEqual(review.created_at, review.updated_at)
 
-    def assert_timestamp(self, value, persisted, started):
-        self.assertIs(type(value), str)
-        parsed = parse_datetime(value)
-        self.assertIsNotNone(parsed)
-        self.assertTrue(timezone.is_aware(parsed))
-        self.assertEqual(parsed, persisted)
-        self.assertLessEqual(started, parsed)
-        self.assertLessEqual(parsed, timezone.now())
-
     def assert_error(self, payload, status, codes, **kwargs):
         before = self.snapshot()
         response = self.client.post(self.url, payload, **kwargs)
@@ -93,14 +79,6 @@ class ReviewCreateTests(OfferTestHelpers, APITestCase):
         if status == 401:
             self.assertEqual(response["WWW-Authenticate"], "Token")
         return response
-
-    def assert_error_content(self, errors, code):
-        if isinstance(errors, list):
-            self.assertTrue(errors)
-        for error in errors if isinstance(errors, list) else [errors]:
-            self.assertIsInstance(error, str)
-            self.assertTrue(error)
-            self.assertEqual(error.code, code)
 
     def assert_field_error(self, field, value, code):
         payload = {**self.payload, field: value}
