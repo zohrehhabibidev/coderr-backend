@@ -259,6 +259,18 @@ class OfferCreateTests(APITestCase):
                     payload, ("details", 0, field), code,
                 )
 
+    def test_invalid_features_returns_field_errors_without_db_changes(self):
+        cases = ({"invalid": True}, "invalid", 7, True, None,
+                 [7], [True], [None], [{}], [[]], ["Valid", 7])
+        for features in cases:
+            with self.subTest(features=features):
+                payload = deepcopy(self.payload)
+                payload["details"][2]["features"] = features
+                code = "null" if features is None else "invalid"
+                self.assert_validation_error(
+                    payload, ("details", 2, "features"), code,
+                )
+
     def test_public_get_minimum_configuration(self):
         self.client.credentials()
         self.assertEqual(self.client.get(self.url).status_code, 200)

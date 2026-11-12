@@ -21,6 +21,13 @@ class OfferDetailSerializer(serializers.ModelSerializer):
             "offer_type",
         ]
 
+    def validate_features(self, value):
+        if not isinstance(value, list) or any(
+            not isinstance(feature, str) for feature in value
+        ):
+            raise serializers.ValidationError("Expected a list of strings.")
+        return value
+
 
 class OfferSerializer(serializers.ModelSerializer):
     details = OfferDetailSerializer(many=True)
@@ -81,13 +88,6 @@ class StrictUpdateFieldsMixin:
 class OfferDetailUpdateSerializer(
     StrictUpdateFieldsMixin, OfferDetailSerializer
 ):
-    def validate_features(self, value):
-        if not isinstance(value, list) or any(
-            not isinstance(feature, str) for feature in value
-        ):
-            raise serializers.ValidationError("Expected a list of strings.")
-        return value
-
     def validate(self, attrs):
         if "offer_type" not in attrs:
             raise serializers.ValidationError({
