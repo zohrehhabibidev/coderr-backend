@@ -4,6 +4,17 @@ from rest_framework import serializers
 from reviews_app.models import Review
 
 
+class ReviewListQuerySerializer(serializers.Serializer):
+    """Validate review filters and ordering parameters."""
+
+    business_user_id = serializers.IntegerField(required=False)
+    reviewer_id = serializers.IntegerField(required=False)
+    ordering = serializers.ChoiceField(
+        choices=["updated_at", "rating"],
+        required=False,
+    )
+
+
 class ReviewCreateSerializer(serializers.ModelSerializer):
     """Create a review with the authenticated customer as reviewer."""
 
