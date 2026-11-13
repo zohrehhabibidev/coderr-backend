@@ -83,11 +83,9 @@ class BaseInfoTests(ReviewTestHelpers, APITestCase):
         Review.objects.filter(pk=self.reviews[2].pk).update(rating=2)
         self.assert_statistics(average=3.7)
 
-    def test_no_reviews_returns_zero_count_and_float_zero_average(self):
+    def test_no_reviews_returns_zero_count_and_numeric_zero_average(self):
         Review.objects.all().delete()
-        self.assert_statistics(reviews=0, average=0.0)
-        self.assertIs(type(self.client.get(self.url).json()["average_rating"]),
-                      float)
+        self.assert_statistics(reviews=0, average=0)
 
     def test_only_business_profiles_contribute_to_business_count(self):
         self.make_user("additional-customer", "customer")

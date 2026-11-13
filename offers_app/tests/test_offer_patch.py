@@ -87,7 +87,8 @@ class OfferPatchTests(APITestCase):
             detail = self.offer.details.get(offer_type=submitted["offer_type"])
             self.assert_detail_persisted(detail, submitted)
 
-    def assert_rejected(self, payload, status=400, url=None, field=None):
+    def assert_rejected(self, payload, status=400, url=None, field=None,
+                        path=()):
         before = self.snapshot()
         response = self.client.patch(url or self.url, payload, format="json")
         self.assertEqual(response.status_code, status)
@@ -96,7 +97,22 @@ class OfferPatchTests(APITestCase):
         if field:
             self.assertIn(field, response.data)
             self.assertTrue(response.data[field])
+            self.assert_error_content(response.data[field], path)
         self.assertEqual(self.snapshot(), before)
+
+    def assert_error_content(self, errors, path):
+        for key in path:
+            self.assertIsInstance(errors, (dict, list))
+            if isinstance(errors, dict):
+                self.assertIn(key, errors)
+            errors = errors[key]
+        if isinstance(errors, str):
+            errors = [errors]
+        self.assertIsInstance(errors, list)
+        self.assertTrue(errors)
+        for message in errors:
+            self.assertIsInstance(message, str)
+            self.assertTrue(message.strip())
 
     def test_title_only_preserves_all_packages_and_omitted_fields(self):
         self.assert_updated({"title": "Updated design"})
@@ -136,7 +152,8 @@ class OfferPatchTests(APITestCase):
         for field in ("id", "offer", "unknown"):
             with self.subTest(field=field):
                 self.assert_rejected({"title": "Must roll back", "details": [
-                    {"offer_type": "basic", field: 99}]}, field="details")
+                    {"offer_type": "basic", field: 99}]}, field="details",
+                    path=(0, field))
 
     def test_invalid_nested_values_roll_back_title_and_first_package(self):
         cases = (("title", ""), ("title", None), ("title", "x" * 201),
@@ -147,11 +164,13 @@ class OfferPatchTests(APITestCase):
             with self.subTest(field=field, value=value):
                 self.assert_rejected({"title": "Must roll back", "details": [
                     self.detail("basic"),
-                    {"offer_type": "premium", field: value}]}, field="details")
+                    {"offer_type": "premium", field: value}]},
+                    field="details", path=(1, field))
 
     def test_missing_offer_type_rolls_back(self):
         self.assert_rejected({"title": "Must roll back", "details": [
-            self.detail("basic"), {"price": 25}]}, field="details")
+            self.detail("basic"), {"price": 25}]}, field="details",
+            path=(1, "offer_type"))
 
     def test_invalid_features_structure_and_members_roll_back(self):
         cases = ({"invalid": True}, "invalid", 7, True, None,
@@ -161,7 +180,7 @@ class OfferPatchTests(APITestCase):
                 self.assert_rejected({"title": "Must roll back", "details": [
                     self.detail("basic"),
                     {"offer_type": "premium", "features": features}]},
-                    field="details")
+                    field="details", path=(1, "features"))
 
     def test_empty_features_list_clears_package_features(self):
         self.assert_updated({"details": [{"offer_type": "basic",
@@ -177,13 +196,17 @@ class OfferPatchTests(APITestCase):
             with self.subTest(offer_type=kind):
                 self.assert_rejected({"title": "Must roll back", "details": [
                     self.detail("basic"), {"offer_type": kind, "price": 25}]},
-                    field="details")
+                    field="details", path=(1, "offer_type"))
 
     def test_invalid_details_structure_rolls_back(self):
-        for details in (None, "invalid", {}, [7]):
+        for details, path in ((None, ()),
+                              ("invalid", ("non_field_errors",)),
+                              ({}, ("non_field_errors",)),
+                              ([7], (0, "non_field_errors"))):
             with self.subTest(details=details):
                 self.assert_rejected({"title": "Must roll back",
-                                      "details": details}, field="details")
+                                      "details": details}, field="details",
+                                     path=path)
 
     def test_anonymous_patch_returns_401_without_changes(self):
         self.client.credentials()

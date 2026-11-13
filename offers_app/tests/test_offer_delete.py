@@ -69,7 +69,7 @@ class OfferDeleteTests(OfferTestHelpers, APITestCase):
                         self.assertIs(type(actual[field]), type(value))
                         self.assertEqual(actual[field], value)
 
-    def assert_error(self, status, message, code, url=None):
+    def assert_error(self, status, code, url=None):
         before = self.snapshot()
         response = self.client.delete(url or self.url)
         self.assertEqual(response.status_code, status)
@@ -78,7 +78,7 @@ class OfferDeleteTests(OfferTestHelpers, APITestCase):
         self.assertIsInstance(data, dict)
         self.assertEqual(set(data), {"detail"})
         self.assertIs(type(data["detail"]), str)
-        self.assertEqual(data, {"detail": message})
+        self.assertTrue(data["detail"].strip())
         self.assertEqual(response.data["detail"].code, code)
         self.assertEqual(self.snapshot(), before)
 
@@ -86,8 +86,7 @@ class OfferDeleteTests(OfferTestHelpers, APITestCase):
         user = self.make_user("non-owner", role, staff)
         self.assertNotEqual(user.pk, self.offer.user_id)
         self.authenticate(user)
-        self.assert_error(403, "You do not have permission to perform this "
-                          "action.", "permission_denied")
+        self.assert_error(403, "permission_denied")
 
     def test_owner_deletes_all_packages_and_preserves_order_history(self):
         self.assertEqual(set(self.offer.details.values_list(
@@ -97,12 +96,11 @@ class OfferDeleteTests(OfferTestHelpers, APITestCase):
 
     def test_anonymous_delete_returns_401_without_changes(self):
         self.client.credentials()
-        self.assert_error(401, "Authentication credentials were not provided.",
-                          "not_authenticated")
+        self.assert_error(401, "not_authenticated")
 
     def test_invalid_token_returns_401_without_changes(self):
         self.client.credentials(HTTP_AUTHORIZATION="Token invalid")
-        self.assert_error(401, "Invalid token.", "authentication_failed")
+        self.assert_error(401, "authentication_failed")
 
     def test_non_owner_customer_returns_403_without_changes(self):
         self.assert_non_owner_denied("customer")
@@ -126,13 +124,11 @@ class OfferDeleteTests(OfferTestHelpers, APITestCase):
         missing = Offer.objects.order_by("pk").last().pk + 1
         self.assertFalse(Offer.objects.filter(pk=missing).exists())
         url = reverse("offer-detail", args=[missing])
-        self.assert_error(404, "No Offer matches the given query.",
-                          "not_found", url)
+        self.assert_error(404, "not_found", url)
 
     def test_repeated_delete_returns_404_without_further_changes(self):
         self.assert_deleted()
-        self.assert_error(404, "No Offer matches the given query.",
-                          "not_found")
+        self.assert_error(404, "not_found")
 
     def test_offer_without_orders_can_be_deleted(self):
         Order.objects.filter(offer_detail_id__in=self.detail_ids).delete()

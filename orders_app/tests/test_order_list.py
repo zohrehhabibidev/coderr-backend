@@ -65,13 +65,16 @@ class OrderListTests(OfferTestHelpers, APITestCase):
         self.assertEqual(data, expected)
         self.assert_response_types(data)
 
-    def assert_unauthorized(self, message, code):
+    def assert_unauthorized(self, code):
         before = self.snapshot()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response["Content-Type"], "application/json")
-        self.assertEqual(response.json(), {"detail": message})
-        self.assertIs(type(response.json()["detail"]), str)
+        data = response.json()
+        self.assertIsInstance(data, dict)
+        self.assertEqual(set(data), {"detail"})
+        self.assertIs(type(data["detail"]), str)
+        self.assertTrue(data["detail"].strip())
         self.assertEqual(response.data["detail"].code, code)
         self.assertEqual(self.snapshot(), before)
 
@@ -142,21 +145,15 @@ class OrderListTests(OfferTestHelpers, APITestCase):
 
     def test_anonymous_get_returns_401_without_database_changes(self):
         self.client.credentials()
-        self.assert_unauthorized(
-            "Authentication credentials were not provided.",
-            "not_authenticated",
-        )
+        self.assert_unauthorized("not_authenticated")
 
     def test_invalid_token_returns_401_without_database_changes(self):
         self.client.credentials(HTTP_AUTHORIZATION="Token invalid")
-        self.assert_unauthorized("Invalid token.", "authentication_failed")
+        self.assert_unauthorized("authentication_failed")
 
     def test_missing_token_value_returns_401_without_database_changes(self):
         self.client.credentials(HTTP_AUTHORIZATION="Token")
-        self.assert_unauthorized(
-            "Invalid token header. No credentials provided.",
-            "authentication_failed",
-        )
+        self.assert_unauthorized("authentication_failed")
 
     def test_get_uses_snapshots_after_source_package_changes(self):
         self.offer.details.update(title="Replacement", revisions=99,

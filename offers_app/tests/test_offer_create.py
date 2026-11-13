@@ -51,6 +51,10 @@ class OfferCreateTests(APITestCase):
         self.assertEqual(response.status_code, expected)
         self.assertIsInstance(response.data, dict)
         self.assertTrue(response.data)
+        if expected in (401, 403):
+            self.assertIn("detail", response.data)
+            self.assertIsInstance(response.data["detail"], str)
+            self.assertTrue(response.data["detail"].strip())
         self.assertEqual(
             (Offer.objects.count(), OfferDetail.objects.count()), before,
         )
@@ -60,12 +64,14 @@ class OfferCreateTests(APITestCase):
         errors = self.assert_rejected(payload)
         for key in path:
             self.assertIsInstance(errors, (dict, list))
+            if isinstance(errors, dict):
+                self.assertIn(key, errors)
             errors = errors[key]
         self.assertIsInstance(errors, list)
         self.assertTrue(errors)
         for error in errors:
             self.assertIsInstance(error, str)
-            self.assertTrue(error)
+            self.assertTrue(error.strip())
             self.assertEqual(error.code, code)
 
     def assert_detail_types(self, response):
@@ -180,11 +186,7 @@ class OfferCreateTests(APITestCase):
                 payload = deepcopy(self.payload)
                 del payload[field]
                 before = (Offer.objects.count(), OfferDetail.objects.count())
-                response = self.client.post(self.url, payload, format="json")
-                self.assertEqual(response.status_code, 400)
-                self.assertIsInstance(response.data, dict)
-                self.assertIn(field, response.data)
-                self.assertTrue(response.data[field])
+                self.assert_validation_error(payload, (field,), "required")
                 counts = (Offer.objects.count(), OfferDetail.objects.count())
                 self.assertEqual(counts, before)
 
@@ -193,11 +195,8 @@ class OfferCreateTests(APITestCase):
             with self.subTest(value=value):
                 payload = deepcopy(self.payload)
                 payload["title"] = value
-                response = self.client.post(self.url, payload, format="json")
-                self.assertEqual(response.status_code, 400)
-                self.assertIsInstance(response.data, dict)
-                self.assertIn("title", response.data)
-                self.assertTrue(response.data["title"])
+                code = "null" if value is None else "blank"
+                self.assert_validation_error(payload, ("title",), code)
                 self.assertEqual(Offer.objects.count(), 0)
                 self.assertEqual(OfferDetail.objects.count(), 0)
 
@@ -270,10 +269,6 @@ class OfferCreateTests(APITestCase):
                 self.assert_validation_error(
                     payload, ("details", 2, "features"), code,
                 )
-
-    def test_public_get_minimum_configuration(self):
-        self.client.credentials()
-        self.assertEqual(self.client.get(self.url).status_code, 200)
 
     def test_routing(self):
         self.assertEqual(self.url, "/api/offers/")

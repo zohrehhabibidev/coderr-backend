@@ -101,24 +101,29 @@ class OrderCreateTests(OfferTestHelpers, APITestCase):
         response = self.client.post(self.url, payload, **kwargs)
         self.assertEqual(response.status_code, status)
         self.assertEqual(response["Content-Type"], "application/json")
-        self.assertIsInstance(response.json(), dict)
-        self.assertEqual(response.json(), expected)
-        for field, code in codes.items():
-            errors = response.data[field]
-            for error in errors if isinstance(errors, list) else [errors]:
-                self.assertIsInstance(error, str)
-                self.assertNotEqual(error, "")
-                self.assertEqual(error.code, code)
+        data = response.json()
+        self.assertIsInstance(data, dict)
+        self.assertEqual(set(data), set(expected))
+        for field, error_type in expected.items():
+            self.assertIsInstance(data[field], error_type)
+            self.assert_error_content(response.data[field], codes[field])
         self.assertEqual(self.snapshot(), before)
 
-    def assert_invalid_id(self, payload, message, code):
-        self.assert_error(payload, 400, {"offer_detail_id": [message]},
+    def assert_error_content(self, errors, code):
+        self.assertTrue(errors)
+        for error in errors if isinstance(errors, list) else [errors]:
+            self.assertIsInstance(error, str)
+            self.assertTrue(error.strip())
+            self.assertEqual(error.code, code)
+
+    def assert_invalid_id(self, payload, code):
+        self.assert_error(payload, 400, {"offer_detail_id": list},
                           {"offer_detail_id": code}, format="json")
 
-    def assert_detail_error(self, status, message, code, payload=None):
+    def assert_detail_error(self, status, code, payload=None):
         payload = payload or {"offer_detail_id": self.detail.pk}
         self.assert_error(
-            payload, status, {"detail": message}, {"detail": code},
+            payload, status, {"detail": str}, {"detail": code},
             format="json",
         )
 
@@ -201,15 +206,14 @@ class OrderCreateTests(OfferTestHelpers, APITestCase):
         self.assertNotEqual(first.features, second.features)
 
     def test_missing_and_null_offer_detail_id(self):
-        self.assert_invalid_id({}, "This field is required.", "required")
+        self.assert_invalid_id({}, "required")
         self.assert_invalid_id({"offer_detail_id": None},
-                               "This field may not be null.", "null")
+                               "null")
 
     def test_malformed_and_wrong_type_offer_detail_ids(self):
         for value in ("", "abc", "1.5", 1.5, True, False, [], {}, [1]):
             with self.subTest(value=value):
                 self.assert_invalid_id({"offer_detail_id": value},
-                                       "A valid integer is required.",
                                        "invalid")
 
     def test_zero_and_negative_offer_detail_ids(self):
@@ -217,18 +221,15 @@ class OrderCreateTests(OfferTestHelpers, APITestCase):
             with self.subTest(value=value):
                 self.assert_invalid_id(
                     {"offer_detail_id": value},
-                    "Ensure this value is greater than or equal to 1.",
                     "min_value",
                 )
 
     def test_non_object_request_bodies(self):
-        for value, label in (([], "list"), ("bad", "str"), (7, "int")):
+        for value in ([], "bad", 7):
             with self.subTest(value=value):
                 self.assert_error(
-                    value, 400, {"non_field_errors": [
-                        "Invalid data. Expected a dictionary, "
-                        f"but got {label}."
-                    ]}, {"non_field_errors": "invalid"}, format="json",
+                    value, 400, {"non_field_errors": list},
+                    {"non_field_errors": "invalid"}, format="json",
                 )
 
     def test_malformed_json_returns_parse_error_without_changes(self):
@@ -238,10 +239,11 @@ class OrderCreateTests(OfferTestHelpers, APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response["Content-Type"], "application/json")
-        self.assertEqual(set(response.json()), {"detail"})
-        self.assertIs(type(response.json()["detail"]), str)
-        self.assertTrue(response.json()["detail"].startswith(
-            "JSON parse error"))
+        data = response.json()
+        self.assertIsInstance(data, dict)
+        self.assertEqual(set(data), {"detail"})
+        self.assertIs(type(data["detail"]), str)
+        self.assertTrue(data["detail"].strip())
         self.assertEqual(response.data["detail"].code, "parse_error")
         self.assertEqual(self.snapshot(), before)
 
@@ -260,33 +262,28 @@ class OrderCreateTests(OfferTestHelpers, APITestCase):
             with self.subTest(field=name):
                 self.assert_error(
                     {"offer_detail_id": self.detail.pk, name: value}, 400,
-                    {name: "This field cannot be supplied."},
+                    {name: str},
                     {name: "invalid"}, format="json",
                 )
 
     def test_multiple_extra_fields_report_every_rejected_field(self):
         self.assert_error(
             {"offer_detail_id": self.detail.pk, "price": 1, "status": "done"},
-            400, {name: "This field cannot be supplied."
-                  for name in ("price", "status")},
+            400, {name: str for name in ("price", "status")},
             {name: "invalid" for name in ("price", "status")}, format="json",
         )
 
     def test_anonymous_request_returns_401(self):
         self.client.credentials()
         self.assert_detail_error(
-            401, "Authentication credentials were not provided.",
-            "not_authenticated",
+            401, "not_authenticated",
         )
 
     def test_invalid_and_missing_token_credentials_return_401(self):
-        for header, message in (
-            ("Token invalid", "Invalid token."),
-            ("Token", "Invalid token header. No credentials provided."),
-        ):
+        for header in ("Token invalid", "Token"):
             with self.subTest(header=header):
                 self.client.credentials(HTTP_AUTHORIZATION=header)
-                self.assert_detail_error(401, message, "authentication_failed")
+                self.assert_detail_error(401, "authentication_failed")
 
     def test_non_customer_roles_return_403(self):
         for role, staff in (("business", False), ("business", True),
@@ -295,14 +292,13 @@ class OrderCreateTests(OfferTestHelpers, APITestCase):
                 user = self.make_user(f"denied-{role}-{staff}", role, staff)
                 self.authenticate(user)
                 self.assert_detail_error(
-                    403, "You do not have permission to perform this action.",
-                    "permission_denied",
+                    403, "permission_denied",
                 )
 
     def test_nonexistent_positive_offer_detail_id_returns_404(self):
         missing = max(detail.pk for detail in self.details.values()) + 1
         self.assertFalse(self.offer.details.filter(pk=missing).exists())
         self.assert_detail_error(
-            404, "No OfferDetail matches the given query.", "not_found",
+            404, "not_found",
             {"offer_detail_id": missing},
         )

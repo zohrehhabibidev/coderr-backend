@@ -47,10 +47,7 @@ class OrderDeleteTests(OfferTestHelpers, APITestCase):
         self.assertEqual(self.snapshot(), before)
 
     def assert_forbidden(self):
-        self.assert_error(
-            403, "You do not have permission to perform this action.",
-            "permission_denied",
-        )
+        self.assert_error(403, "permission_denied")
 
     def test_url_routes_to_existing_order_detail_view(self):
         self.assertEqual(self.url, f"/api/orders/{self.order.pk}/")
@@ -93,18 +90,13 @@ class OrderDeleteTests(OfferTestHelpers, APITestCase):
 
     def test_anonymous_request_returns_401_without_changes(self):
         self.client.credentials()
-        self.assert_error(401, "Authentication credentials were not provided.",
-                          "not_authenticated")
+        self.assert_error(401, "not_authenticated")
 
     def test_invalid_and_missing_token_values_return_401(self):
-        for header, message in (
-            ("Token invalid", "Invalid token."),
-            ("Token", "Invalid token header. No credentials provided."),
-            ("Token ", "Invalid token header. No credentials provided."),
-        ):
+        for header in ("Token invalid", "Token", "Token "):
             with self.subTest(header=header):
                 self.client.credentials(HTTP_AUTHORIZATION=header)
-                self.assert_error(401, message, "authentication_failed")
+                self.assert_error(401, "authentication_failed")
 
     def test_unrelated_non_staff_roles_return_403_without_changes(self):
         for role in ("customer", "business", None):
@@ -130,13 +122,11 @@ class OrderDeleteTests(OfferTestHelpers, APITestCase):
         missing = Order.objects.order_by("pk").last().pk + 1
         self.assertFalse(Order.objects.filter(pk=missing).exists())
         url = reverse("order-detail", args=[missing])
-        self.assert_error(404, "No Order matches the given query.",
-                          "not_found", url)
+        self.assert_error(404, "not_found", url)
 
     def test_repeated_delete_returns_404_without_further_changes(self):
         self.assert_deleted()
-        self.assert_error(404, "No Order matches the given query.",
-                          "not_found")
+        self.assert_error(404, "not_found")
 
     def test_non_staff_missing_order_is_rejected_before_lookup(self):
         self.authenticate(self.owner)

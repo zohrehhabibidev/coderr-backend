@@ -85,23 +85,33 @@ class ProfileDetailTests(APITestCase):
                 self.assertEqual(response.data["user"], target.pk)
                 self.assertEqual(response.data["username"], target.username)
 
+    def assert_profile_error(self, response, expected_status):
+        self.assertEqual(response.status_code, expected_status)
+        self.assertIsInstance(response.data, dict)
+        self.assertIn("detail", response.data)
+        self.assertIsInstance(response.data["detail"], str)
+        self.assertTrue(response.data["detail"].strip())
+
     def test_missing_authentication_returns_401(self):
         response = self.get_profile(self.customer.pk)
-        self.assertEqual(response.status_code, 401)
+        self.assert_profile_error(response, 401)
         self.assertEqual(response["WWW-Authenticate"], "Token")
 
     def test_invalid_token_returns_401(self):
         self.client.credentials(HTTP_AUTHORIZATION="Token invalid")
-        self.assertEqual(self.get_profile(self.customer.pk).status_code, 401)
+        response = self.get_profile(self.customer.pk)
+        self.assert_profile_error(response, 401)
 
     def test_nonexistent_user_returns_404(self):
         self.authenticate(self.customer)
-        self.assertEqual(self.get_profile(999999).status_code, 404)
+        response = self.get_profile(999999)
+        self.assert_profile_error(response, 404)
 
     def test_user_without_profile_returns_404(self):
         user = User.objects.create_user(username="without_profile")
         self.authenticate(self.customer)
-        self.assertEqual(self.get_profile(user.pk).status_code, 404)
+        response = self.get_profile(user.pk)
+        self.assert_profile_error(response, 404)
 
     def test_lookup_uses_user_id_instead_of_profile_id(self):
         self.assertNotEqual(self.business.pk, self.business_profile.pk)

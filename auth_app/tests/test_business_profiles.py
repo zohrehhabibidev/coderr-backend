@@ -5,10 +5,13 @@ from rest_framework.test import APITestCase
 
 from auth_app.api.views import BusinessProfileListView
 from auth_app.models import Profile
+from . import test_profile
 
 
 class BusinessProfileListTests(APITestCase):
     """Verify the business list contract using authenticated API requests."""
+
+    assert_profile_error = test_profile.ProfileDetailTests.assert_profile_error
 
     fields = [
         "user", "username", "first_name", "last_name", "file",
@@ -98,12 +101,12 @@ class BusinessProfileListTests(APITestCase):
 
     def test_unauthenticated_user_returns_401(self):
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 401)
+        self.assert_profile_error(response, 401)
 
     def test_invalid_token_returns_401(self):
         self.client.credentials(HTTP_AUTHORIZATION="Token invalid")
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 401)
+        self.assert_profile_error(response, 401)
 
     def test_business_can_access_business_profiles(self):
         self.authenticate(self.business)

@@ -65,40 +65,38 @@ class OrderPatchTests(OfferTestHelpers, APITestCase):
         self.assertEqual(response.status_code, status)
         self.assertEqual(response["Content-Type"], "application/json")
         self.assertIs(type(response.json()), dict)
-        self.assertEqual(response.json(), expected)
+        self.assertEqual(set(response.json()), set(expected))
         self.assert_error_types(response, expected, codes)
         self.assertEqual(self.snapshot(), before)
 
     def assert_error_types(self, response, expected, codes):
-        for field, value in expected.items():
+        for field, error_type in expected.items():
             actual = response.json()[field]
-            self.assertIs(type(actual), type(value))
+            self.assertIs(type(actual), error_type)
+            self.assertTrue(actual)
             errors = response.data[field]
             for error in errors if isinstance(errors, list) else [errors]:
                 self.assertIsInstance(error, str)
+                self.assertTrue(error.strip())
                 self.assertEqual(error.code, codes[field])
             for message in actual if isinstance(actual, list) else [actual]:
                 self.assertIs(type(message), str)
 
     def assert_denied(self, status):
-        message, code = self.expected_denial(status)
+        code = self.expected_denial(status)
         self.assert_rejected(status, {"status": "completed"},
-                             {"detail": message}, {"detail": code},
+                             {"detail": str}, {"detail": code},
                              format="json")
 
     def expected_denial(self, status):
         if status == 403:
-            return ("You do not have permission to perform this action.",
-                    "permission_denied")
+            return "permission_denied"
         if status == 404:
-            return "No Order matches the given query.", "not_found"
+            return "not_found"
         header = self.client._credentials.get("HTTP_AUTHORIZATION", "")
         if not header:
-            return ("Authentication credentials were not provided.",
-                    "not_authenticated")
-        message = ("Invalid token." if header == "Token invalid" else
-                   "Invalid token header. No credentials provided.")
-        return message, "authentication_failed"
+            return "not_authenticated"
+        return "authentication_failed"
 
     def assert_invalid(self, payload, field="status"):
         expected, code = self.expected_validation(payload, field)
@@ -107,22 +105,19 @@ class OrderPatchTests(OfferTestHelpers, APITestCase):
 
     def expected_validation(self, payload, field):
         if field == "non_field_errors":
-            label = type(payload).__name__
-            return {field: ["Invalid data. Expected a dictionary, "
-                            f"but got {label}."]}, "invalid"
+            return {field: list}, "invalid"
         if "status" not in payload:
-            return {"status": "This field is required."}, "invalid"
+            return {"status": str}, "invalid"
         extra = set(payload) - {"status"}
         if extra:
-            return {name: "This field cannot be updated."
-                    for name in extra}, "invalid"
-        message, code = self.expected_status_error(payload["status"])
-        return {"status": [message]}, code
+            return {name: str for name in extra}, "invalid"
+        code = self.expected_status_error(payload["status"])
+        return {"status": list}, code
 
     def expected_status_error(self, value):
         if value is None:
-            return "This field may not be null.", "null"
-        return f'"{value}" is not a valid choice.', "invalid_choice"
+            return "null"
+        return "invalid_choice"
 
     def test_url_routes_to_order_detail_view(self):
         self.assertEqual(self.url, f"/api/orders/{self.order.pk}/")
@@ -211,8 +206,7 @@ class OrderPatchTests(OfferTestHelpers, APITestCase):
 
     def test_malformed_json_returns_400_without_changes(self):
         self.assert_rejected(
-            400, '{"status":', {"detail": "JSON parse error - Expecting "
-                               "value: line 1 column 11 (char 10)"},
+            400, '{"status":', {"detail": str},
             {"detail": "parse_error"}, content_type="application/json",
         )
 

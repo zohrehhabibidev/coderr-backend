@@ -32,8 +32,17 @@ class RegistrationTestBase(APITestCase):
         before = self.counts()
         response = self.client.post(self.url, payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIsInstance(response.data, dict)
         self.assertIn(field, response.data)
+        self.assert_validation_messages(response.data[field])
         self.assertEqual(self.counts(), before)
+
+    def assert_validation_messages(self, errors):
+        self.assertIsInstance(errors, list)
+        self.assertTrue(errors)
+        for message in errors:
+            self.assertIsInstance(message, str)
+            self.assertTrue(message.strip())
 
     def assert_registration(self, payload):
         before = self.counts()

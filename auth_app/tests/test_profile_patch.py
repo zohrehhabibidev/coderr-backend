@@ -30,6 +30,18 @@ class ProfilePatchTests(APITestCase):
         )
 
     authenticate = test_profile.ProfileDetailTests.authenticate
+    assert_profile_error = test_profile.ProfileDetailTests.assert_profile_error
+
+    def assert_validation_error(self, response, field):
+        self.assertEqual(response.status_code, 400)
+        self.assertIsInstance(response.data, dict)
+        self.assertIn(field, response.data)
+        errors = response.data[field]
+        self.assertIsInstance(errors, list)
+        self.assertTrue(errors)
+        for message in errors:
+            self.assertIsInstance(message, str)
+            self.assertTrue(message.strip())
 
     def update_profile(self, user, data, format="json"):
         return self.client.patch(
@@ -82,12 +94,12 @@ class ProfilePatchTests(APITestCase):
         self.authenticate(self.customer)
         before = self.snapshot(self.business)
         response = self.update_profile(self.business, {"location": "Changed"})
-        self.assertEqual(response.status_code, 403)
+        self.assert_profile_error(response, 403)
         self.assertEqual(self.snapshot(self.business), before)
 
     def test_missing_authentication_returns_401(self):
         response = self.update_profile(self.customer, {"location": "Changed"})
-        self.assertEqual(response.status_code, 401)
+        self.assert_profile_error(response, 401)
         self.assertEqual(response["WWW-Authenticate"], "Token")
 
     def test_missing_user_or_profile_returns_404(self):
@@ -96,7 +108,7 @@ class ProfilePatchTests(APITestCase):
         for user in (missing_profile, User(pk=999999)):
             with self.subTest(pk=user.pk):
                 response = self.update_profile(user, {})
-                self.assertEqual(response.status_code, 404)
+                self.assert_profile_error(response, 404)
 
     def test_empty_text_fields_are_strings(self):
         self.authenticate(self.customer)
@@ -133,12 +145,14 @@ class ProfilePatchTests(APITestCase):
     def test_invalid_data_does_not_partially_update_either_model(self):
         self.authenticate(self.business)
         before = self.snapshot(self.business)
-        for data in ({"email": "invalid", "location": "Changed"},
-                     {"first_name": "Changed", "tel": "x" * 31},
-                     {"location": None}, {"first_name": None}):
+        for data, field in (
+                ({"email": "invalid", "location": "Changed"}, "email"),
+                ({"first_name": "Changed", "tel": "x" * 31}, "tel"),
+                ({"location": None}, "location"),
+                ({"first_name": None}, "first_name")):
             with self.subTest(data=data):
                 response = self.update_profile(self.business, data)
-                self.assertEqual(response.status_code, 400)
+                self.assert_validation_error(response, field)
                 self.assertEqual(self.snapshot(self.business), before)
 
     def test_profile_save_failure_rolls_back_user_update(self):
@@ -175,6 +189,6 @@ class ProfilePatchTests(APITestCase):
         response = self.update_profile(
             self.business, {"file": self.image_upload()}, "multipart"
         )
-        self.assertEqual(response.status_code, 403)
+        self.assert_profile_error(response, 403)
         self.business_profile.refresh_from_db()
         self.assertFalse(self.business_profile.file)
