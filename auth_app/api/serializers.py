@@ -37,6 +37,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        """Create user, profile and token atomically; return user."""
         user_type = validated_data.pop("type")
         validated_data.pop("repeated_password")
         user = User.objects.create_user(**validated_data)
@@ -50,6 +51,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
+        """Authenticate and return attrs with the user added."""
         user = authenticate(
             username=attrs["username"],
             password=attrs["password"],
