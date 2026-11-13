@@ -2,7 +2,7 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class IsBusinessOrReadOnly(BasePermission):
-    """Allow reads publicly and writes only for authenticated businesses."""
+    """Allow public reads and authenticated business writes."""
 
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:

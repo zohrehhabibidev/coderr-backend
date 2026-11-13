@@ -1,4 +1,4 @@
-"""Shared fixture and authentication helpers for offer and order tests."""
+"""Shared fixtures and authentication for offers and orders."""
 
 from decimal import Decimal
 
@@ -11,7 +11,7 @@ from orders_app.models import Order
 
 
 class OfferTestHelpers:
-    """Provide users, offers, orders, snapshots and token authentication."""
+    """Provide users, offers, orders, snapshots and tokens."""
 
     def make_user(self, name, role=None, staff=False):
         user = User.objects.create_user(username=name, is_staff=staff)

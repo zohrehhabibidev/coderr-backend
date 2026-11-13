@@ -13,7 +13,7 @@ from django.test import TransactionTestCase
 
 
 class OrderSnapshotMigrationTests(TransactionTestCase):
-    """Use historical models and restore leaf migrations before flush."""
+    """Use historical models; restore leaves before flush."""
 
     migrate_from = [("orders_app", "0001_initial")]
     migrate_to = [("orders_app", "0002_order_snapshot")]
@@ -28,13 +28,13 @@ class OrderSnapshotMigrationTests(TransactionTestCase):
         self.create_sources()
 
     def migrate(self, targets):
-        """Reload the graph so recorder changes never leave stale state."""
+        """Reload the graph to avoid stale recorder state."""
         executor = MigrationExecutor(connection)
         executor.migrate(targets)
         return executor.loader.project_state(targets).apps
 
     def rebuild_order_table(self):
-        """Reset the test Order table; 0002 has no reverse data operation."""
+        """Reset test Orders; 0002 has no reverse operation."""
         self.assert_test_database()
         self.addCleanup(self.restore_latest)
         executor = MigrationExecutor(connection)
@@ -64,7 +64,7 @@ class OrderSnapshotMigrationTests(TransactionTestCase):
         )
 
     def restore_latest(self):
-        """Discard invalid fixtures before retrying an atomic migration."""
+        """Discard invalid fixtures before retrying migration."""
         with connection.cursor() as cursor:
             cursor.execute("DELETE FROM orders_app_order")
         self.migrate(self.latest)
@@ -238,7 +238,7 @@ class OrderSnapshotMigrationTests(TransactionTestCase):
                 )
 
     def assert_missing_source_rejected(self):
-        # SQLite's schema-exit FK check otherwise masks the source error.
+        # Avoid the schema-exit FK check masking the source error.
         with patch.object(connection, "check_constraints"):
             with self.assertRaisesRegex(RuntimeError, "missing OfferDetail"):
                 self.migrate(self.migrate_to)

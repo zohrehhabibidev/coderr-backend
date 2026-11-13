@@ -9,7 +9,7 @@ from reviews_app.tests.helpers import ReviewTestHelpers
 
 
 class ReviewListTests(ReviewTestHelpers, APITestCase):
-    """Check authenticated listing, exact records and read-only safety."""
+    """Check listing, exact records and read safety."""
 
     def setUp(self):
         super().setUp()
@@ -145,7 +145,7 @@ class ReviewListTests(ReviewTestHelpers, APITestCase):
                          f"?reviewer_id={self.customer.pk}")
 
     def test_current_serializer_rejects_invalid_integer_filters(self):
-        """HTTP 400 reflects current validation beyond documented statuses."""
+        """HTTP 400 reflects extra validation."""
         for field in ("business_user_id", "reviewer_id"):
             for value in ("", "abc", "1.5", "true", "[]", "{}", "null"):
                 with self.subTest(field=field, value=value):
@@ -168,7 +168,7 @@ class ReviewListTests(ReviewTestHelpers, APITestCase):
                            "ordering": "invalid_choice"})
 
     def test_current_unknown_query_keys_and_pagination_are_ignored(self):
-        """Characterize unspecified keys without adding a contract rule."""
+        """Characterize unspecified keys without new rules."""
         for query in ("?page=1&page_size=1", "?business_user_id[]=bad",
                       "?unknown=%ZZ"):
             with self.subTest(query=query):

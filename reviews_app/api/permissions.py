@@ -2,7 +2,7 @@ from rest_framework.permissions import BasePermission
 
 
 class IsCustomer(BasePermission):
-    """Allow review creation only for authenticated customer profiles."""
+    """Allow review creation for authenticated customers."""
 
     def has_permission(self, request, view):
         profile = getattr(request.user, "profile", None)

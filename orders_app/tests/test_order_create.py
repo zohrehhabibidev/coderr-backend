@@ -1,4 +1,4 @@
-"""Card 27 contract tests through the routed POST API with real tokens."""
+"""Card 27 contract tests via POST with real tokens."""
 
 from copy import deepcopy
 from decimal import Decimal

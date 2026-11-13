@@ -75,7 +75,8 @@ class StrictUpdateFieldsMixin:
     def to_internal_value(self, data):
         if isinstance(data, Mapping):
             writable = {
-                name for name, field in self.fields.items() if not field.read_only
+                name for name, field in self.fields.items()
+                if not field.read_only
             }
             invalid = set(data) - writable
             if invalid:
@@ -101,7 +102,9 @@ class OfferUpdateSerializer(StrictUpdateFieldsMixin, OfferSerializer):
 
     def validate_details(self, value):
         offer_types = [detail["offer_type"] for detail in value]
-        existing = {detail.offer_type for detail in self.instance.details.all()}
+        existing = {
+            detail.offer_type for detail in self.instance.details.all()
+        }
         if len(offer_types) != len(set(offer_types)):
             raise serializers.ValidationError("Duplicate offer_type values.")
         if set(offer_types) - existing:
@@ -115,7 +118,9 @@ class OfferUpdateSerializer(StrictUpdateFieldsMixin, OfferSerializer):
         return super().update(instance, validated_data)
 
     def update_details(self, instance, details_data):
-        existing = {detail.offer_type: detail for detail in instance.details.all()}
+        existing = {
+            detail.offer_type: detail for detail in instance.details.all()
+        }
         serializer = self.fields["details"].child
         for detail_data in details_data:
             detail = existing[detail_data.pop("offer_type")]
@@ -142,7 +147,7 @@ class OfferUserSerializer(serializers.ModelSerializer):
 
 
 class OfferListSerializer(serializers.ModelSerializer):
-    """Serialize list annotations without changing the create contract."""
+    """Serialize list annotations; keep the create contract."""
 
     details = OfferDetailLinkSerializer(many=True, read_only=True)
     min_price = serializers.DecimalField(
@@ -162,7 +167,7 @@ class OfferListSerializer(serializers.ModelSerializer):
 
 
 class OfferRetrieveDetailLinkSerializer(OfferDetailLinkSerializer):
-    """Use request-based absolute package URLs for offer retrieval (A5)."""
+    """Use absolute package URLs for retrieval (A5)."""
 
     url = serializers.HyperlinkedIdentityField(
         view_name="offer-package-detail",
@@ -170,7 +175,7 @@ class OfferRetrieveDetailLinkSerializer(OfferDetailLinkSerializer):
 
 
 class OfferRetrieveSerializer(serializers.ModelSerializer):
-    """Represent one offer with package links and annotated minimum values."""
+    """Show one offer with package links and minimum values."""
 
     details = OfferRetrieveDetailLinkSerializer(many=True, read_only=True)
     min_price = serializers.DecimalField(

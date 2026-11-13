@@ -40,7 +40,7 @@ class OrderListCreateView(ListCreateAPIView):
 
 
 class OrderDetailView(RetrieveUpdateDestroyAPIView):
-    """Allow business owners to update status and staff to delete orders."""
+    """Let business owners update status and staff delete orders."""
 
     queryset = Order.objects.all()
     serializer_class = OrderUpdateSerializer

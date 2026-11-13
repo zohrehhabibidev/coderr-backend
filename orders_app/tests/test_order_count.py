@@ -1,4 +1,4 @@
-"""Card 31 order count contract through the routed API with real tokens."""
+"""Card 31 order count tests via the API with real tokens."""
 
 from django.contrib.auth.models import User
 from django.urls import resolve, reverse

@@ -1,4 +1,4 @@
-"""Card 30 staff-only deletion through the routed API with real tokens."""
+"""Card 30 staff-only deletion via the API with real tokens."""
 
 from django.urls import resolve, reverse
 from rest_framework.test import APITestCase
@@ -11,7 +11,7 @@ from reviews_app.models import Review
 
 
 class OrderDeleteTests(OfferTestHelpers, APITestCase):
-    """Verify method-specific authorization and precise database changes."""
+    """Verify authorization and precise database changes."""
 
     assert_error = deletion.OfferDeleteTests.assert_error
 

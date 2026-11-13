@@ -148,7 +148,7 @@ class OrderLifecycleTests(OfferTestHelpers, APITestCase):
 
 
 class MultiRoleIntegrationTests(ReviewTestHelpers, APITestCase):
-    """Run the registered customer and business journey through the API."""
+    """Run the customer and business journey via the API."""
 
     detail = offers.OfferCreateTests.detail
     add_detail_ids = offers.OfferCreateTests.add_detail_ids

@@ -11,7 +11,7 @@ from orders_app.tests import test_order_create as creation
 
 
 class OrderListTests(OfferTestHelpers, APITestCase):
-    """Verify private order history, snapshots and read-only GET requests."""
+    """Verify private history, snapshots and read-only GETs."""
 
     package_snapshot = creation.OrderCreateTests.package_snapshot
     package_fields = creation.OrderCreateTests.package_fields

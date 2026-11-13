@@ -46,7 +46,7 @@ class ReviewListCreateView(ListCreateAPIView):
 
 
 class ReviewDetailView(RetrieveUpdateDestroyAPIView):
-    """Allow authenticated reviewers to update or delete their reviews."""
+    """Let reviewers update or delete their own reviews."""
 
     queryset = Review.objects.all()
     serializer_class = ReviewUpdateSerializer

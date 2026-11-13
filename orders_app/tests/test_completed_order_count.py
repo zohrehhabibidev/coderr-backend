@@ -1,4 +1,4 @@
-"""Card 32 completed order counts through the routed API with real tokens."""
+"""Card 32 completed order counts via API with real tokens."""
 
 from django.contrib.auth.models import User
 from django.urls import resolve, reverse

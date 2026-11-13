@@ -78,7 +78,7 @@ class BusinessProfileListView(ListAPIView):
 
 
 class CustomerProfileListView(ListAPIView):
-    """Return all customer profiles as an array to authenticated users."""
+    """Return a customer profile array to authenticated users."""
 
     queryset = Profile.objects.filter(type="customer").select_related("user")
     serializer_class = CustomerProfileSerializer

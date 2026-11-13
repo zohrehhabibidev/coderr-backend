@@ -1,4 +1,4 @@
-"""Card 33 review creation contract tests using real token authentication."""
+"""Card 33 review creation tests with real tokens."""
 
 from unittest.mock import patch
 
@@ -14,7 +14,7 @@ from reviews_app.tests.helpers import ReviewTestHelpers
 
 
 class ReviewCreateTests(ReviewTestHelpers, APITestCase):
-    """Verify review responses, role permissions and rejected-write safety."""
+    """Verify responses, permissions and write safety."""
 
     def setUp(self):
         super().setUp()

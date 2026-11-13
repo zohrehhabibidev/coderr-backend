@@ -18,7 +18,7 @@ class ReviewListQuerySerializer(serializers.Serializer):
 
 
 class IntegerPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
-    """Reject fractional numeric primary keys before querying the database."""
+    """Reject fractional numeric keys before querying."""
 
     def to_internal_value(self, data):
         if isinstance(data, float) and not data.is_integer():
@@ -76,7 +76,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
 
 
 class ReviewUpdateSerializer(serializers.ModelSerializer):
-    """Update review content and return the complete review representation."""
+    """Update content and return the complete review."""
 
     class Meta:
         model = Review

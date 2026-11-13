@@ -1,4 +1,4 @@
-"""Card 37 public platform statistics and persisted aggregation tests."""
+"""Card 37 statistics and persisted aggregation tests."""
 
 from django.contrib.auth.models import User
 from django.urls import resolve, reverse
@@ -12,7 +12,7 @@ from reviews_app.tests.helpers import ReviewTestHelpers
 
 
 class BaseInfoTests(ReviewTestHelpers, APITestCase):
-    """Verify exact statistics and read-only access through the routed API."""
+    """Verify statistics and read-only API access."""
 
     def setUp(self):
         super().setUp()

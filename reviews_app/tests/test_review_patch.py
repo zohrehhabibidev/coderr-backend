@@ -12,7 +12,7 @@ from reviews_app.tests.helpers import ReviewTestHelpers
 
 
 class ReviewPatchTests(ReviewTestHelpers, APITestCase):
-    """Verify ownership, validation, exact responses and write isolation."""
+    """Verify ownership, validation and write isolation."""
 
     def setUp(self):
         super().setUp()

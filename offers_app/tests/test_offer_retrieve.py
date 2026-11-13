@@ -14,7 +14,7 @@ from offers_app.tests.helpers import OfferTestHelpers
 
 
 class OfferRetrieveTests(OfferTestHelpers, APITestCase):
-    """Verify Card 23 through HTTP with persisted offers and real tokens."""
+    """Verify Card 23 via HTTP with persisted offers and tokens."""
 
     def setUp(self):
         super().setUp()

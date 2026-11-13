@@ -9,7 +9,7 @@ from orders_app.models import Order
 
 
 class OfferDeleteTests(OfferTestHelpers, APITestCase):
-    """Verify owner-only deletion and preservation of stored order history."""
+    """Verify owner-only deletion and stored order history."""
 
     def setUp(self):
         super().setUp()

@@ -92,7 +92,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        # Email remains writable pending the A2 teacher/contract clarification.
+        # Email stays writable pending A2 teacher clarification.
         user_data = validated_data.pop("user", {})
         for field, value in user_data.items():
             setattr(instance.user, field, value)
@@ -117,7 +117,7 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
 
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
-    """Expose customer details and account names for the profile list."""
+    """Expose customer details and account names in the list."""
 
     username = serializers.CharField(source="user.username", read_only=True)
     first_name = serializers.CharField(

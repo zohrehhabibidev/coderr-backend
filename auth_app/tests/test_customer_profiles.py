@@ -9,7 +9,7 @@ from . import test_profile
 
 
 class CustomerProfileListTests(APITestCase):
-    """Verify customer profiles with the teacher-approved flexible schema."""
+    """Verify customer profiles with the approved flexible schema."""
 
     assert_profile_error = test_profile.ProfileDetailTests.assert_profile_error
 
@@ -40,7 +40,7 @@ class CustomerProfileListTests(APITestCase):
         self.assertIsNone(response.data[0]["file"])
 
     def user_id(self, profile):
-        """Accept an integer or a user object while checking its identity."""
+        """Accept an integer or user object and check identity."""
         user = profile["user"]
         self.assertIn(type(user), (int, dict))
         user_id = user["id"] if isinstance(user, dict) else user

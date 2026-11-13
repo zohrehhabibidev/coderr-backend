@@ -9,7 +9,7 @@ from . import test_profile
 
 
 class BusinessProfileListTests(APITestCase):
-    """Verify the business list contract using authenticated API requests."""
+    """Verify business lists with authenticated requests."""
 
     assert_profile_error = test_profile.ProfileDetailTests.assert_profile_error
 

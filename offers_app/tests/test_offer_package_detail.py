@@ -10,7 +10,7 @@ from offers_app.models import Offer, OfferDetail
 
 
 class OfferPackageDetailTests(APITestCase):
-    """Exercise Card 24 using persisted packages and real token requests."""
+    """Exercise Card 24 with persisted packages and tokens."""
 
     def setUp(self):
         super().setUp()

@@ -10,7 +10,7 @@ from offers_app.tests import test_offer_retrieve as retrieval
 
 
 class OfferPatchTests(APITestCase):
-    """Verify Card 25 partial updates against the routed API contract."""
+    """Verify Card 25 partial updates via the routed API."""
 
     make_user = retrieval.OfferRetrieveTests.make_user
     make_offer = retrieval.OfferRetrieveTests.make_offer
