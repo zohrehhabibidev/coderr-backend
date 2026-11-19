@@ -8,6 +8,8 @@ from offers_app.models import Offer, OfferDetail
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
+    """Serialize package details and validate their feature list."""
+
     class Meta:
         model = OfferDetail
         extra_kwargs = {"price": {"coerce_to_string": False}}
@@ -30,6 +32,8 @@ class OfferDetailSerializer(serializers.ModelSerializer):
 
 
 class OfferSerializer(serializers.ModelSerializer):
+    """Create an offer with basic, standard and premium packages."""
+
     details = OfferDetailSerializer(many=True)
 
     class Meta:
@@ -89,6 +93,8 @@ class StrictUpdateFieldsMixin:
 class OfferDetailUpdateSerializer(
     StrictUpdateFieldsMixin, OfferDetailSerializer
 ):
+    """Validate writable package fields and require its offer type."""
+
     def validate(self, attrs):
         if "offer_type" not in attrs:
             raise serializers.ValidationError({
@@ -98,6 +104,8 @@ class OfferDetailUpdateSerializer(
 
 
 class OfferUpdateSerializer(StrictUpdateFieldsMixin, OfferSerializer):
+    """Update an offer and match nested packages by offer type."""
+
     details = OfferDetailUpdateSerializer(many=True)
 
     def validate_details(self, value):
@@ -118,6 +126,7 @@ class OfferUpdateSerializer(StrictUpdateFieldsMixin, OfferSerializer):
         return super().update(instance, validated_data)
 
     def update_details(self, instance, details_data):
+        """Apply partial package updates using offer types as identifiers."""
         existing = {
             detail.offer_type: detail for detail in instance.details.all()
         }
@@ -141,6 +150,8 @@ class OfferDetailLinkSerializer(serializers.ModelSerializer):
 
 
 class OfferUserSerializer(serializers.ModelSerializer):
+    """Expose the offer creator's account names."""
+
     class Meta:
         model = get_user_model()
         fields = ["first_name", "last_name", "username"]

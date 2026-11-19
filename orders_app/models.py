@@ -5,6 +5,8 @@ from offers_app.models import OfferDetail
 
 
 class Order(models.Model):
+    """Store order participants, status and a snapshot of package terms."""
+
     customer_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

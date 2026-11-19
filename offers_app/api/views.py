@@ -67,6 +67,8 @@ class OfferDetailView(RetrieveUpdateDestroyAPIView):
 
 
 class OfferPackageDetailView(RetrieveAPIView):
+    """Retrieve a single offer package for authenticated users."""
+
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailSerializer
     permission_classes = [IsAuthenticated]

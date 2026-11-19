@@ -3,6 +3,8 @@ from django.db import models
 
 
 class Review(models.Model):
+    """Store a reviewer's rating and description for a business user."""
+
     business_user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

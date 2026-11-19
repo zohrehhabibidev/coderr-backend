@@ -19,6 +19,8 @@ from reviews_app.models import Review
 
 
 class ReviewListCreateView(ListCreateAPIView):
+    """List reviews for authenticated users and allow customer creation."""
+
     serializer_class = ReviewCreateSerializer
     permission_classes = [IsAuthenticated, IsCustomer]
     http_method_names = ["get", "post", "options"]
@@ -55,6 +57,8 @@ class ReviewDetailView(RetrieveUpdateDestroyAPIView):
 
 
 class BaseInfoView(APIView):
+    """Expose public review, business profile and offer statistics."""
+
     permission_classes = [AllowAny]
     http_method_names = ["get", "options"]
 

@@ -22,6 +22,8 @@ from orders_app.models import Order
 
 
 class OrderListCreateView(ListCreateAPIView):
+    """List the user's orders and allow customers to create orders."""
+
     serializer_class = OrderCreateSerializer
     permission_classes = [IsAuthenticated, IsCustomer]
     http_method_names = ["get", "post", "options"]
@@ -54,6 +56,8 @@ class OrderDetailView(RetrieveUpdateDestroyAPIView):
 
 
 class OrderCountView(APIView):
+    """Count in-progress orders for an existing business profile."""
+
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "options"]
 
@@ -71,6 +75,8 @@ class OrderCountView(APIView):
 
 
 class CompletedOrderCountView(APIView):
+    """Count completed orders for an existing business profile."""
+
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "options"]
 

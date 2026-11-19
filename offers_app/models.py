@@ -3,6 +3,8 @@ from django.db import models
 
 
 class Offer(models.Model):
+    """Store a user's service offer and its descriptive details."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -30,6 +32,8 @@ class Offer(models.Model):
 
 
 class OfferDetail(models.Model):
+    """Store pricing, delivery terms and features for an offer package."""
+
     class OfferType(models.TextChoices):
         BASIC = "basic", "Basic"
         STANDARD = "standard", "Standard"

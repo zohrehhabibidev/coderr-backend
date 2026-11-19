@@ -8,6 +8,8 @@ from auth_app.models import Profile
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    """Validate registration data and create an account with a profile."""
+
     email = serializers.EmailField(
         required=True, allow_blank=False, max_length=254
     )
@@ -29,6 +31,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
+        """Require the password and its confirmation to match."""
         if attrs["password"] != attrs["repeated_password"]:
             raise serializers.ValidationError(
                 {"repeated_password": "Passwords do not match."}
@@ -47,6 +50,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
+    """Validate credentials and identify the authenticated user."""
+
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
@@ -92,6 +97,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        """Update profile fields and related account fields atomically."""
         # Email stays writable pending A2 teacher clarification.
         user_data = validated_data.pop("user", {})
         for field, value in user_data.items():
@@ -102,6 +108,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class BusinessProfileSerializer(serializers.ModelSerializer):
+    """Expose business profile details and account names in the list."""
+
     username = serializers.CharField(source="user.username", read_only=True)
     first_name = serializers.CharField(
         source="user.first_name", read_only=True

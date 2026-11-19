@@ -18,6 +18,8 @@ from .serializers import (
 
 
 class RegistrationView(generics.CreateAPIView):
+    """Register an account and return its token and account details."""
+
     serializer_class = RegistrationSerializer
     permission_classes = [AllowAny]
 
@@ -38,6 +40,8 @@ class RegistrationView(generics.CreateAPIView):
 
 
 class LoginView(APIView):
+    """Authenticate credentials and return a token with account details."""
+
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
 
@@ -72,6 +76,8 @@ class ProfileDetailView(RetrieveUpdateAPIView):
 
 
 class BusinessProfileListView(ListAPIView):
+    """List business profiles for authenticated users."""
+
     queryset = Profile.objects.filter(type="business").select_related("user")
     serializer_class = BusinessProfileSerializer
     permission_classes = [IsAuthenticated]

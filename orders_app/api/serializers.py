@@ -9,6 +9,8 @@ from orders_app.models import Order
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
+    """Create an order from a package and expose its saved snapshot."""
+
     offer_detail_id = serializers.IntegerField(write_only=True, min_value=1)
 
     class Meta:
@@ -31,6 +33,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
     def validate_offer_detail_id(self, value):
+        """Resolve the package ID or raise a not-found error."""
         return get_object_or_404(
             OfferDetail.objects.select_related("offer__user"), pk=value,
         )

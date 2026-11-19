@@ -2,6 +2,8 @@ from django.db import models
 
 
 class Profile(models.Model):
+    """Store an account's user type and profile details."""
+
     class UserType(models.TextChoices):
         CUSTOMER = "customer", "Customer"
         BUSINESS = "business", "Business"
